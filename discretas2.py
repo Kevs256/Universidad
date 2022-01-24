@@ -1,7 +1,8 @@
 import math
 
-inicial=1000000000
-final=1000000100
+inicial=2
+final=50
+##deben haber 15
 
 divisores=2
 siguiente=0
@@ -10,7 +11,9 @@ resultados =[]
 for i in range(0,final-inicial+1):
     numero=inicial+i
     raizcadauno=math.sqrt(numero)
-    while (divisores<raizcadauno):
+    if (divisores>math.sqrt(numero)):
+        primo=1
+    while (divisores<=raizcadauno):
         primo=1
         if numero%divisores == 0:
             primo=0
