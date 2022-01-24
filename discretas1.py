@@ -1,5 +1,5 @@
+baseInicial=input("ingrese la base de el numero inicial")
 numero=input("ingrese el numero a transformar")
-baseInicial=input("ingrese la base de el numero anterior")
 baseFinal=input("ingrese la base a la que quiere transformar")
 
 def tentoOther(numero,baseFinal):
