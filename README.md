@@ -1,3 +1,3 @@
 ### Hi there 👋
-1.falta ponerle clases a ambos ejercicios 
-2.al segundo ejercicios toda dejarlo en un funcion
+1.falta sacar al 1 de los primos
+3.falta poner cuantos primos sale de la lista
