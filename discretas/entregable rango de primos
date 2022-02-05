@@ -1,11 +1,9 @@
-#!/usr/bin/python3 # -*- coding: utf-8 -*- 3 al 5 obligado, 6 es el prompt, 9 constructor, 10 super, 11 llama la ventana, 12 es el boton, con evento, conectar, conectado con el metodo saludar que es un metodo, la linea 15 establece en el labSalida.set text el texto, haciendo txtpersona.text, en el 16 hace el promtp
-
+#!/usr/bin/python3 # -*- coding: utf-8 -*-
 import sys 
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtWidgets import QMessageBox 
 import math
-
 
 class Example(QMainWindow):
     
@@ -15,14 +13,11 @@ class Example(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        uic.loadUi("ventanita.ui",self)
+        uic.loadUi("primos.ui",self)
         self.btnCalcular.clicked.connect(self.mostrar)
-        
-        
     def mostrar(self):
-        self.labSalida.setText("el resultado es"+self.calcularPrimo(int(self.txtRangodos.text()),int(self.txtRangouno.text())))
-        #QMessageBox.about(self, "Saludo", "Hola "+self.txtPersona.text())
-
+        self.labSalida.setText("el resultado es"+str(self.calcularPrimo(int(self.txtRangodos.text()),int(self.txtRangouno.text()))))
+        self.labSalida_2.setText("hay esta cantidad de elementos: "+str(len((self.calcularPrimo(int(self.txtRangodos.text()),int(self.txtRangouno.text()))))))
     def calcularPrimo(self,final,inicial):
         divisores=2
         resultados =[]
@@ -38,11 +33,9 @@ class Example(QMainWindow):
                     break
                 divisores=divisores + 1
             divisores=2
-            if (primo == 1):
+            if (primo == 1 and inicial+i != 1):
                 resultados.append(inicial+i)
-        
-        cadena = " ".join(str(resultados))
-        return cadena
+        return resultados
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
