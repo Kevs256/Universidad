@@ -1,0 +1,19 @@
+Comandos de Linux
+Pwd: nos dice en que directorio estamos
+Ls: lista las cosas de un directorio, recibe parámetros como –la, para ver archivos ocultos, -lh, para mas informacion, ls –list para ver los permisos de cada archivo u directorio
+Cd: seleccionar directorio
+Rm: remove, sirve apra eliminar un directorio, elimina todo lo que hay dentro
+Mv: mueve, move archivo dirección
+Touch: crea un archivo
+Mkdir: hace un directorio
+Whoami: nos dice que usuario esta usando la maquina
+Sudo: nos concede permisos de administrador antes de cada comando
+Cat: muestra el archivo, cat nombrearchivo
+Tail: muestra el final del archivo, creo que 10 lineas
+Head: muestra el inicio del archivo
+Chmod: cambiar los permisos del archivo, recibe parámetros como chmod 777 nombrearchivo
+Cp: copy, copia un archivo a alguna ubicación cp archivo dirección
+Ping: hace ping a url especifica
+Apt-get: es la librería de instaladores, apt-get install (seguido del nombre del paquete a instalar),update, upgrade
+Vim: es un editor de texto desde terminal , vim archivo
+Grep: busca algo en un archivo plano de texto, grep hola hola.txt
