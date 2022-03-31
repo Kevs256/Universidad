@@ -1,0 +1,25 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import time
+
+from skimage import io
+
+imagen = io.imread("DJI_0198.jpg")/255
+#plt.imshow(imagen)
+
+print(len(imagen))
+len(imagen[1,:])
+
+newimage=np.empty([4000,2250,3])
+
+for k in range (0,3):
+    for j in range(0,2250):
+        for i in range(0,4000):
+            newimage[i,-j,k]=imagen[j,i,k]
+            
+#procesamiento de imagenes, cambiando el simbolo de la variable j e i, se cambian hacia donde gira  la imagen
+#faltaria poner las variables de recorrido en funcion de la imagen
+
+    
+plt.imshow(newimage)
