@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from skimage import io
+import time
+import multiprocessing 
+
+
+imagen=io.imread('1.jpg') # imread lee las imagenes con los pixeles codificados como enteros 
+a=io.imread('2.jpg')
+b=io.imread('3.jpg')
+plt.imshow(imagen,vmin=0,vmax=1)
+
+
+def grisess(imagen):
+    
+    factorr=0.299
+    factorg=0.5870
+    factorb=0.1140
+    
+    grises=np.zeros([len(imagen),len(imagen[0,:])])
+    for i in range(0,len(imagen)):
+        for j in range(0,len(imagen[0,:])):
+            grises[i,j]=factorr*imagen[i,j,0]+factorg*imagen[i,j,1]+factorb*imagen[i,j,2]
+    return grises
+
+procesos=4
+
+def handler(sfiles):
+    p=multiprocessing.Pool(processes=procesos)
+    r=p.map(grisess, sfiles)
+    #r=readsfile(sfiles)
+    print('llego hasta aqui')
+    p.close()
+    return r
+
+numeroimagenes=24
+
+
+
+a=1
+b=procesos+1
+
+if __name__ == '__main__':
+    start =time.time()
+    for i in range(1,int(numeroimagenes/procesos)+1 ):
+        print(i)
+        sfiles=[]
+        salida=[]
+        print('iteracion #',i)
+        print('archivo #', b)
+        for j in range(a,b):
+            print(j)
+            sfiles.append(io.imread(str(j)+'.jpg'))
+            #salida.append(handler(sfiles))
+            #print(sfiles)
+        salida.append(handler(sfiles))
+        a=j+1
+        b=b+procesos
+    final=start-time.time()
+    print(final)
+        
