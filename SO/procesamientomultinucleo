@@ -1,10 +1,20 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed May  4 11:50:45 2022
+
+@author: Kedars
+"""
+import os
+from pickle import FALSE, TRUE
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from skimage import io
 import time
-import multiprocessing 
-
+import multiprocessing
+import psutil
+import threading
 
 imagen=io.imread('1.jpg') # imread lee las imagenes con los pixeles codificados como enteros 
 a=io.imread('2.jpg')
@@ -24,39 +34,64 @@ def grisess(imagen):
             grises[i,j]=factorr*imagen[i,j,0]+factorg*imagen[i,j,1]+factorb*imagen[i,j,2]
     return grises
 
-procesos=4
+procesos=2
 
 def handler(sfiles):
     p=multiprocessing.Pool(processes=procesos)
     r=p.map(grisess, sfiles)
-    #r=readsfile(sfiles)
-    print('llego hasta aqui')
     p.close()
     return r
 
+cpu=[]
+ram=[]
+tiempo=[]
+
+def load_cpu(timer_runs,start,termino):
+    while timer_runs:  
+        if termino:
+            print("sigo procesando")
+            cpu.append(psutil.cpu_percent())
+            ram.append(psutil.virtual_memory().percent)
+            tiempo.append(int(time.time()-start))
+        print("he terminado")
+        time.sleep(3)
+      
 numeroimagenes=24
-
-
 
 a=1
 b=procesos+1
 
 if __name__ == '__main__':
+    termino=TRUE
     start =time.time()
+    timer_runs = threading.Event()
+    timer_runs.set()
+    t = threading.Thread(target=load_cpu, args=(timer_runs,start,termino))
+    t.start()
+
     for i in range(1,int(numeroimagenes/procesos)+1 ):
-        print(i)
         sfiles=[]
         salida=[]
-        print('iteracion #',i)
-        print('archivo #', b)
         for j in range(a,b):
-            print(j)
             sfiles.append(io.imread(str(j)+'.jpg'))
-            #salida.append(handler(sfiles))
-            #print(sfiles)
         salida.append(handler(sfiles))
         a=j+1
         b=b+procesos
     final=start-time.time()
+    termino=FALSE
+
     print(final)
-        
+    print(cpu)
+    print(tiempo)
+    print(ram)
+
+    #fig, ax = plt.subplots()
+    #ax.plot(tiempo,cpu)
+    #plt.show()
+    
+
+    #fig, ax = plt.subplots()
+    #ax.plot(tiempo,ram)
+    #plt.show()
+
+    #os._exit(0)
