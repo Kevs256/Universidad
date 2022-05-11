@@ -1,0 +1,175 @@
+from asyncio.windows_events import NULL
+import numpy as np
+import random
+from pyparsing import empty
+
+#variable de la etiqueta
+incremental=1
+
+#aqui creamos la memoria total compuesta por 100 espacios vacios 
+#donde 0 es vacio y 1 es lleno
+memoria=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+# aca se crea el numero aleatorio para definir si el dato es de 
+# 3 a 11 kbyte
+def creacionTamaño():
+    numeroKbytes = random.randint(3, 11)
+    return numeroKbytes
+
+#crearemos el numero total grande
+def crearNumero(kilobytes):
+    numeroGrande=[]
+    totalNumeros=kilobytes*8000
+    for i in range(0,totalNumeros):
+        numero = random.randint(0, 9)
+        numeroGrande.append(numero)
+    return numeroGrande
+
+#creamos el nombre o etiqueta de cada proceso
+#se opto por ser un incremental, facil pero con el tiempo puede
+#llegar a pesar mucho
+def etiquetaProceso(incremental):
+    etiqueta=incremental+1
+    incremental=incremental+1
+    return etiqueta
+
+#creamos la lista de la estructura general
+#posicion 1, numero grandes
+#posicion 2, id unico para cada proceso
+#posicion 3, cuanto pesa en total
+#posicion 4, inicia, en que parte de la memoria esta
+#posicion 5, final, posicion final en la memoria
+#posicion 6, asignado en 1 y no asignado en 0
+def estructuraGeneral(numeroGrande,etiqueta,tamaño):
+    proceso=[numeroGrande,etiqueta,tamaño,0,0,0]
+    return proceso
+
+#estructur para el so
+def estructuraSO(numeroGrande,etiqueta,tamaño):
+    SO=[numeroGrande,etiqueta,tamaño,0,19,1]
+    return SO
+
+#creacion total de un proceso de cero
+def crearProceso():
+    tamaño=creacionTamaño()
+    packProceso=estructuraGeneral(crearNumero(tamaño),etiquetaProceso(incremental),tamaño)
+    return packProceso
+
+#crear sistema operativo
+def crearSO():
+    packProceso=estructuraSO(crearNumero(20),0,20)
+    return packProceso
+
+# aca la intesion es poder dividir el paquete de cada proceso
+# en numeros con 1kb, conservando la etiqueta para saber el proceso
+def divisionProceso(proceso,tamaño):
+    procesoDividido=[] #es el paquete de procesos generado
+    numeroGrande=[] #nuevo numero grande apra cada paquete
+    inicial=0
+    kb=8000
+    for i in range(0,tamaño):
+        for j in range(inicial,kb):
+            numeroGrande.append(proceso[0][j])
+        procesoDividido.append(estructuraGeneral(numeroGrande,proceso[1],proceso[2]))
+        numeroGrande=[]
+        kb=kb+8000
+        inicial=inicial+8000
+    return procesoDividido
+
+
+#este metodo me devolvera una lista con las posiciones vacias
+#la devolvera en forma de rangos
+#retorna los rangos vacios
+def verificaciondeMemoria(memoriaTotal):
+    listadeVacios=[]
+    rangos2d=[]
+    rangos=[]
+    for i in range(0,100):
+        if memoriaTotal[i]==0:
+            rangos.append(i)
+            try:
+                if int(memoriaTotal[i+1])!=0:
+                    rangos2d.append(rangos[0])
+                    rangos2d.append(rangos[-1])
+                    listadeVacios.append(rangos2d)
+                    rangos2d=[]
+                    rangos=[] 
+            except IndexError:
+                rangos2d.append(rangos[0])
+                rangos2d.append(rangos[-1])
+                listadeVacios.append(rangos2d)
+                rangos2d=[]
+                rangos=[]           
+    return listadeVacios
+
+#metodo de verificar si vabe un proceso para despues insersion
+def verificarInsercion(proceso,estadoMemoria):
+    peso=proceso[2]
+    unidadesVacias=len(estadoMemoria)
+    posibles=[]
+    tamañosPosibles=[]
+    estadoFinal=0
+
+    for i in range(0,unidadesVacias):
+        #si el rango disponible es menor al peso del proceso
+        #guardamos el rango en una lista de posibles
+        if((estadoMemoria[i][1]-estadoMemoria[i][0]+1)>=peso):
+            posibles.append(estadoMemoria[i])
+            tamañosPosibles.append(estadoMemoria[i][1]-estadoMemoria[i][0]+1)
+        else:
+            estadoFinal = 0
+    #vamos a encontrar dentro de los rangos posibles, el rango
+    #mas pequeño donde se pueda guardar
+    try:
+        if (len(tamañosPosibles)!=0):
+            minimoTamaño=min(tamañosPosibles)
+            posicionMinimo=tamañosPosibles.index(minimoTamaño)
+            estadoFinal=posibles[posicionMinimo]
+    except IndexError:
+        estadoFinal=0
+    return estadoFinal
+
+def insercion(proceso,memoriaTotal):
+    rangosDisponibles=verificaciondeMemoria(memoriaTotal)
+    rangoqueSirve=verificarInsercion(proceso,rangosDisponibles)
+    if(rangoqueSirve==0):
+        print("este proceso no cabe vamos a hacer x cosa")
+        #reacomodar los procesos
+        #sacar proceso
+        #pasar al siguiente proceso
+    else:
+        miniProcesos=divisionProceso(proceso,proceso[2])
+        numerodeMiniProcesos=len(miniProcesos)
+        for i in range(0,numerodeMiniProcesos):
+            #falta añadir que el proceso guardado lleve las posiciones
+            # y lleve el peso, y el 1
+            memoriaTotal[rangoqueSirve[0]+i]=miniProcesos[i]
+        memoria=memoriaTotal
+    
+def impresiondeMemoria(memoria):
+    memoriaMostrar=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    for i in range(0,100):
+        if memoria[i]!=0:
+            memoriaMostrar[i]=memoria[i][1]
+    return memoriaMostrar
+    
+
+
+
+#insertamos un proceso a la memoria
+halo=crearProceso()
+print("tamaño")
+print(halo[2])
+print("eango donde debe ir")
+print(verificarInsercion(halo, verificaciondeMemoria(memoria)))
+insercion(halo,memoria)
+print(impresiondeMemoria(memoria))
+
+#insertamos un segundo proceso a la memoria
+halodos=crearProceso()
+print("tamaño")
+print(halodos[2])
+print("eango donde debe ir")
+print(verificarInsercion(halodos, verificaciondeMemoria(memoria)))
+insercion(halodos,memoria)
+print(impresiondeMemoria(memoria))
