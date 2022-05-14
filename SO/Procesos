@@ -1,13 +1,19 @@
+#desarrollado por kedars y Johan el 13/05/2022
+
 from asyncio.windows_events import NULL
 import numpy as np
 import random
 from pyparsing import empty
 
-#variable de la etiqueta
-incremental=1
+#variable de la etiqueta, se usara para diferenciar entre cada proceso
+#es el nombre del proceso
+incrementalGlobal=0
+
+#extracciones, nos dice cuantas extracciones van
+extrac=0
 
 #aqui creamos la memoria total compuesta por 100 espacios vacios 
-#donde 0 es vacio y 1 es lleno
+#donde 0 es vacio
 memoria=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 # aca se crea el numero aleatorio para definir si el dato es de 
@@ -19,7 +25,7 @@ def creacionTamaño():
 #crearemos el numero total grande
 def crearNumero(kilobytes):
     numeroGrande=[]
-    totalNumeros=kilobytes*8000
+    totalNumeros=kilobytes*1000
     for i in range(0,totalNumeros):
         numero = random.randint(0, 9)
         numeroGrande.append(numero)
@@ -28,20 +34,20 @@ def crearNumero(kilobytes):
 #creamos el nombre o etiqueta de cada proceso
 #se opto por ser un incremental, facil pero con el tiempo puede
 #llegar a pesar mucho
-def etiquetaProceso(incremental):
-    etiqueta=incremental+1
-    incremental=incremental+1
-    return etiqueta
+def etiquetaProceso():
+    global incrementalGlobal
+    incrementalGlobal = incrementalGlobal +1
+    return incrementalGlobal
 
 #creamos la lista de la estructura general
-#posicion 1, numero grandes
-#posicion 2, id unico para cada proceso
+#posicion 1, numero grande
+#posicion 2, id unico para cada proceso, etiqueta
 #posicion 3, cuanto pesa en total
 #posicion 4, inicia, en que parte de la memoria esta
 #posicion 5, final, posicion final en la memoria
 #posicion 6, asignado en 1 y no asignado en 0
-def estructuraGeneral(numeroGrande,etiqueta,tamaño):
-    proceso=[numeroGrande,etiqueta,tamaño,0,0,0]
+def estructuraGeneral(numeroGrande,etiqueta,tamaño,inicio,fin,estado):
+    proceso=[numeroGrande,etiqueta,tamaño,inicio,fin,estado]
     return proceso
 
 #estructur para el so
@@ -52,34 +58,37 @@ def estructuraSO(numeroGrande,etiqueta,tamaño):
 #creacion total de un proceso de cero
 def crearProceso():
     tamaño=creacionTamaño()
-    packProceso=estructuraGeneral(crearNumero(tamaño),etiquetaProceso(incremental),tamaño)
+    etiqueta=etiquetaProceso()
+    packProceso=estructuraGeneral(crearNumero(tamaño),etiqueta,tamaño,0,0,0)
     return packProceso
 
 #crear sistema operativo
 def crearSO():
-    packProceso=estructuraSO(crearNumero(20),0,20)
+    packProceso=estructuraSO(crearNumero(20),"SO",20)
     return packProceso
 
 # aca la intesion es poder dividir el paquete de cada proceso
-# en numeros con 1kb, conservando la etiqueta para saber el proceso
-def divisionProceso(proceso,tamaño):
+# en numeros con 1kb, conservando la etiqueta para saber el proceso que es
+#tambien se divide el numero generado en bytes, en cada subproceso hay 100 digitos
+#retorna una lista de subprocesos
+def divisionProceso(proceso,tamaño,rango):
     procesoDividido=[] #es el paquete de procesos generado
     numeroGrande=[] #nuevo numero grande apra cada paquete
     inicial=0
-    kb=8000
+    kb=1000
     for i in range(0,tamaño):
         for j in range(inicial,kb):
-            numeroGrande.append(proceso[0][j])
-        procesoDividido.append(estructuraGeneral(numeroGrande,proceso[1],proceso[2]))
+            numeroGrande.append(proceso[0][j]) #el rango es donde se asignara
+        procesoDividido.append(estructuraGeneral(numeroGrande,proceso[1],proceso[2],rango[0],rango[0]+tamaño,1))
         numeroGrande=[]
-        kb=kb+8000
-        inicial=inicial+8000
+        kb=kb+1000
+        inicial=inicial+1000
     return procesoDividido
 
-
 #este metodo me devolvera una lista con las posiciones vacias
-#la devolvera en forma de rangos
+#la devolvera en forma de rangos [8,16]
 #retorna los rangos vacios
+#se puede mejorar
 def verificaciondeMemoria(memoriaTotal):
     listadeVacios=[]
     rangos2d=[]
@@ -94,7 +103,7 @@ def verificaciondeMemoria(memoriaTotal):
                     listadeVacios.append(rangos2d)
                     rangos2d=[]
                     rangos=[] 
-            except IndexError:
+            except:
                 rangos2d.append(rangos[0])
                 rangos2d.append(rangos[-1])
                 listadeVacios.append(rangos2d)
@@ -102,10 +111,41 @@ def verificaciondeMemoria(memoriaTotal):
                 rangos=[]           
     return listadeVacios
 
-#metodo de verificar si vabe un proceso para despues insersion
-def verificarInsercion(proceso,estadoMemoria):
+#este metodo me devolvera una lista con las posiciones llenas
+#la devolvera en forma de rangos [8,16]
+#retorna los rangos llenos
+#se puede mejorar
+def verificaciondeMemoriallenos(memoriaTotal):
+    listadeLlenos=[]
+    rangos2d=[]
+    rangos=[]
+    for i in range(0,100):
+        if memoriaTotal[i]!=0:
+            rangos.append(i)
+            try:
+                if (memoriaTotal[i][2]!=memoriaTotal[i+1][2]):
+                    rangos2d.append(rangos[0])
+                    rangos2d.append(rangos[-1])
+                    listadeLlenos.append(rangos2d)
+                    rangos2d=[]
+                    rangos=[] 
+            except:
+                rangos2d.append(rangos[0])
+                rangos2d.append(rangos[-1])
+                listadeLlenos.append(rangos2d)
+                rangos2d=[]
+                rangos=[]           
+    return listadeLlenos
+
+#metodo que nos dice cual es el rango que menos desperdicia memoria
+#le ingresamos los rangos sean vacios o llenos y nos dice cual es el rango
+#donde debemos meter el proceso y donde se pierde menos memoria
+#si hay un rango vacio donde quepa el proceso, este lo pondra alli
+#si no hay vacios revisara los llenos (siempre optimizando) y lo retorna
+#retorna el mejor rango
+def verificarInsercion(proceso,rangosPosibles):
     peso=proceso[2]
-    unidadesVacias=len(estadoMemoria)
+    unidadesVacias=len(rangosPosibles)
     posibles=[]
     tamañosPosibles=[]
     estadoFinal=0
@@ -113,9 +153,9 @@ def verificarInsercion(proceso,estadoMemoria):
     for i in range(0,unidadesVacias):
         #si el rango disponible es menor al peso del proceso
         #guardamos el rango en una lista de posibles
-        if((estadoMemoria[i][1]-estadoMemoria[i][0]+1)>=peso):
-            posibles.append(estadoMemoria[i])
-            tamañosPosibles.append(estadoMemoria[i][1]-estadoMemoria[i][0]+1)
+        if((rangosPosibles[i][1]-rangosPosibles[i][0]+1)>=peso):
+            posibles.append(rangosPosibles[i])
+            tamañosPosibles.append(rangosPosibles[i][1]-rangosPosibles[i][0]+1)
         else:
             estadoFinal = 0
     #vamos a encontrar dentro de los rangos posibles, el rango
@@ -129,23 +169,73 @@ def verificarInsercion(proceso,estadoMemoria):
         estadoFinal=0
     return estadoFinal
 
+# aca metemos los procesos, miramos si los rangos vacios cabe, si si, se mete ahi
+#si no cabe en los vacios se busca el proceso adecuado para poder sacarlo y 
+# y pondra el nuevo en su lugar, muchas veces, el proceso ingresado el ligeramente
+#mas pequeño que el anterior, mas adelante estos espacios se desfragementan
 def insercion(proceso,memoriaTotal):
     rangosDisponibles=verificaciondeMemoria(memoriaTotal)
     rangoqueSirve=verificarInsercion(proceso,rangosDisponibles)
-    if(rangoqueSirve==0):
-        print("este proceso no cabe vamos a hacer x cosa")
-        #reacomodar los procesos
-        #sacar proceso
-        #pasar al siguiente proceso
+    rangosLlenos=verificaciondeMemoriallenos(memoriaTotal)
+    mejorRangoLlenos=verificarInsercion(proceso,rangosLlenos)
+    if(rangoqueSirve==0 and mejorRangoLlenos==0):
+        print("este proceso no cabe  de ninguna manera vamos a hacer x cosa")
+        print("imposible")
+
     else:
-        miniProcesos=divisionProceso(proceso,proceso[2])
-        numerodeMiniProcesos=len(miniProcesos)
-        for i in range(0,numerodeMiniProcesos):
-            #falta añadir que el proceso guardado lleve las posiciones
-            # y lleve el peso, y el 1
-            memoriaTotal[rangoqueSirve[0]+i]=miniProcesos[i]
+        if(rangoqueSirve!=0):
+            miniProcesos=divisionProceso(proceso,proceso[2],rangoqueSirve)
+            numerodeMiniProcesos=len(miniProcesos)
+            sacadosCeros(rangoqueSirve)
+            print("Este es el rango mas optimo para ingresar este proceso, esta vacio")
+            print(rangoqueSirve)
+            for i in range(0,numerodeMiniProcesos):
+                memoriaTotal[rangoqueSirve[0]+i]=miniProcesos[i]
+        else:
+            if mejorRangoLlenos[0]!= 0:
+                miniProcesos=divisionProceso(proceso,proceso[2],mejorRangoLlenos)
+                numerodeMiniProcesos=len(miniProcesos)
+                sacadosCeros(mejorRangoLlenos)
+                print("Este es el rango mas optimo para ingresar este proceso, esta lleno")
+                print(mejorRangoLlenos)
+                tamañoAnterior=mejorRangoLlenos[1]-mejorRangoLlenos[0]
+                print("se ha desperdiciado "+str(tamañoAnterior-proceso[2]+1)+ " en memoria al insertar el nuevo proceso")
+                global extrac
+                extrac=extrac+1
+                for i in range(0,numerodeMiniProcesos):
+                    memoriaTotal[mejorRangoLlenos[0]+i]=miniProcesos[i]
+            else:
+                print("ha intentado reemplazar el so, esto no es posible")
         memoria=memoriaTotal
-    
+
+# aca vamos a hacer la funcion para eliminar o llenar de ceros los procesos que son sacados
+#dichos ligeros espacios que no pertenecen al nuevo proceso se rellenan con ceros
+def sacadosCeros(rango):
+    for i in range(rango[0],rango[1]+1):
+        memoria[i]=0
+        
+# aca llevamos la sumatorio de la memoria no usada, la fragmentada que queda entre procesos y
+#y la memoria sobrente a la derecha del todo
+def memoriaMalgastada(memoria):
+    variable=0
+    variableresta=0
+    for i in range(100):
+        if memoria[i]==0:
+            variable=variable+1
+    print("hay " + str(variable)+ "kb que no se estan usando al final de la cola") 
+
+#hacer desfragmentacion, lleva todos los ceros a la derecha del todo, los reune
+def desfragmentaciondeMemoria():
+    global memoria
+    try:
+        for i in range(20):
+            memoria.append(memoria.pop(memoria.index(0)))
+    except:
+        print("fallo")
+
+# aca lo que hago es enviar la etiqeuta de cada proceso en la memoria a otra "memoria"
+#que es una lista que me deja ver como estn almacenados los procesos en la memoria para
+#poder mostrarlos amigablemente
 def impresiondeMemoria(memoria):
     memoriaMostrar=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     for i in range(0,100):
@@ -153,23 +243,36 @@ def impresiondeMemoria(memoria):
             memoriaMostrar[i]=memoria[i][1]
     return memoriaMostrar
     
+#insertamos el sistema operativo
+so=crearSO()
+insercion(so,memoria)
 
+#main________________________________________________________________________________________
+print("primeras 15 extracciones")
+while extrac<=15:
+    proc=crearProceso()
+    print("este es el tamaño del proceso creado")
+    print(proc[2])
+    insercion(proc,memoria)
+    memoriaMalgastada(memoria)
+    print("estado de la memoria")
+    print(impresiondeMemoria(memoria))
+    print("-----------------------------------------------------------------")
 
+for i in range(10):
+    print("segundas 1o inserciones")
+    proc=crearProceso()
+    print("este es el tamaño del proceso creado")
+    print(proc[2])
+    insercion(proc,memoria)
+    memoriaMalgastada(memoria)
+    print("estado de la memoria")
+    print(impresiondeMemoria(memoria))
+    print("-----------------------------------------------------------------")
 
-#insertamos un proceso a la memoria
-halo=crearProceso()
-print("tamaño")
-print(halo[2])
-print("eango donde debe ir")
-print(verificarInsercion(halo, verificaciondeMemoria(memoria)))
-insercion(halo,memoria)
+print("relizando la compactacion")
+desfragmentaciondeMemoria()
+
+print("estado final de la memoria")
 print(impresiondeMemoria(memoria))
-
-#insertamos un segundo proceso a la memoria
-halodos=crearProceso()
-print("tamaño")
-print(halodos[2])
-print("eango donde debe ir")
-print(verificarInsercion(halodos, verificaciondeMemoria(memoria)))
-insercion(halodos,memoria)
-print(impresiondeMemoria(memoria))
+print("al finalizar las inseciones se ha fragmentado la memoria y con la desfragmentacion hemos generado el bloque de espacios vacios arriba impreso" )
